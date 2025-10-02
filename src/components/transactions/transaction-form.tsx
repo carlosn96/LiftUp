@@ -58,7 +58,7 @@ export function TransactionForm({ transaction, onSuccess }: TransactionFormProps
     resolver: zodResolver(formSchema),
     defaultValues: {
       type: transaction?.type || 'expense',
-      amount: transaction?.amount || undefined,
+      amount: transaction?.amount || ('' as any),
       description: transaction?.description || '',
       date: transaction ? new Date(transaction.date as any) : new Date(),
     },
