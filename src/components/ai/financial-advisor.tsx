@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bot, User, CornerDownLeft } from 'lucide-react';
+import { Bot, User, CornerDownLeft, X } from 'lucide-react';
 import { askFinancialAdvisor, FinancialAdvisorInput } from '@/ai/flows/financial-advisor-flow';
 
 type Message = {
