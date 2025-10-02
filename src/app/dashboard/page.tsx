@@ -21,13 +21,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MessageSquare, MoreHorizontal, PlusCircle, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { FinancialAdvisor } from '@/components/ai/financial-advisor';
+import Link from 'next/link';
 
 export default function DashboardPage() {
   const { user, logout, transactions, subscribeToTransactions, deleteTransaction } = useStore();
@@ -35,7 +37,8 @@ export default function DashboardPage() {
   const firestore = useFirestore();
   const router = useRouter();
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   useEffect(() => {
@@ -53,12 +56,12 @@ export default function DashboardPage() {
 
   const handleAddNew = () => {
     setSelectedTransaction(null);
-    setIsDialogOpen(true);
+    setIsTransactionDialogOpen(true);
   };
 
   const handleEdit = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
-    setIsDialogOpen(true);
+    setIsTransactionDialogOpen(true);
   };
   
   const handleDelete = async (transactionId: string) => {
@@ -77,6 +80,9 @@ export default function DashboardPage() {
           LiftUp
         </h1>
         <div className='flex items-center gap-4'>
+            <Link href="/education" passHref>
+              <Button variant="link" className="hidden sm:block">Aprende</Button>
+            </Link>
             <p className="text-sm text-muted-foreground hidden sm:block">
               {user?.email}
             </p>
@@ -164,17 +170,32 @@ export default function DashboardPage() {
         </div>
       </main>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isTransactionDialogOpen} onOpenChange={setIsTransactionDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{selectedTransaction ? 'Editar' : 'Agregar'} Transacción</DialogTitle>
           </DialogHeader>
           <TransactionForm 
             transaction={selectedTransaction} 
-            onSuccess={() => setIsDialogOpen(false)} 
+            onSuccess={() => setIsTransactionDialogOpen(false)} 
           />
         </DialogContent>
       </Dialog>
+      
+      {isChatOpen && (
+        <div className="fixed bottom-4 right-4 w-full max-w-md">
+          <FinancialAdvisor onClose={() => setIsChatOpen(false)} />
+        </div>
+      )}
+
+      <Button
+        onClick={() => setIsChatOpen(!isChatOpen)}
+        className="fixed bottom-4 right-4 h-16 w-16 rounded-full shadow-lg"
+        size="icon"
+      >
+        {isChatOpen ? <X /> : <MessageSquare />}
+        <span className="sr-only">Abrir Asesor Financiero</span>
+      </Button>
     </div>
   );
 }
