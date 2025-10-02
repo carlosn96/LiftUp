@@ -64,19 +64,15 @@ export function TransactionForm({ transaction, onSuccess }: TransactionFormProps
     },
   });
 
-  const onSubmit = async (data: FormValues) => {
+  const onSubmit = (data: FormValues) => {
     if (!firestore || !user) return;
 
-    try {
-      if (transaction) {
-        await updateTransaction(firestore, user.uid, { ...data, id: transaction.id });
-      } else {
-        await addTransaction(firestore, user.uid, data);
-      }
-      onSuccess();
-    } catch (error) {
-      console.error('Error guardando la transacción:', error);
+    if (transaction) {
+      updateTransaction(firestore, user.uid, { ...data, id: transaction.id });
+    } else {
+      addTransaction(firestore, user.uid, data);
     }
+    onSuccess();
   };
 
   return (

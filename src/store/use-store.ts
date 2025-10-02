@@ -13,6 +13,8 @@ import {
   query,
   orderBy,
 } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export type Transaction = {
   id: string;
@@ -30,9 +32,9 @@ type StoreState = {
   setUser: (user: User | null) => void;
   logout: (auth: Auth) => Promise<void>;
   subscribeToTransactions: (db: Firestore, userId: string) => () => void;
-  addTransaction: (db: Firestore, userId: string, transaction: Omit<Transaction, 'id'>) => Promise<void>;
-  updateTransaction: (db: Firestore, userId: string, transaction: Transaction) => Promise<void>;
-  deleteTransaction: (db: Firestore, userId: string, transactionId: string) => Promise<void>;
+  addTransaction: (db: Firestore, userId: string, transaction: Omit<Transaction, 'id'>) => void;
+  updateTransaction: (db: Firestore, userId: string, transaction: Transaction) => void;
+  deleteTransaction: (db: Firestore, userId: string, transactionId: string) => void;
 };
 
 export const useStore = create<StoreState>((set) => ({
@@ -62,29 +64,55 @@ export const useStore = create<StoreState>((set) => ({
       });
       set({ transactions: transactionsData });
     }, (error) => {
-      console.error("Error al obtener transacciones: ", error);
+      const permissionError = new FirestorePermissionError({
+        path: transactionsRef.path,
+        operation: 'list',
+      });
+      errorEmitter.emit('permission-error', permissionError);
       set({ error: "No se pudieron cargar las transacciones." });
     });
 
     return unsubscribe;
   },
-  addTransaction: async (db: Firestore, userId: string, transaction: Omit<Transaction, 'id'>) => {
+  addTransaction: (db: Firestore, userId: string, transaction: Omit<Transaction, 'id'>) => {
     const transactionsRef = collection(db, 'users', userId, 'transactions');
-    await addDoc(transactionsRef, {
+    const data = {
       ...transaction,
       date: Timestamp.fromDate(new Date(transaction.date)),
+    };
+    addDoc(transactionsRef, data).catch(serverError => {
+      const permissionError = new FirestorePermissionError({
+        path: transactionsRef.path,
+        operation: 'create',
+        requestResourceData: data,
+      });
+      errorEmitter.emit('permission-error', permissionError);
     });
   },
-  updateTransaction: async (db: Firestore, userId: string, transaction: Transaction) => {
+  updateTransaction: (db: Firestore, userId: string, transaction: Transaction) => {
     const transactionRef = doc(db, 'users', userId, 'transactions', transaction.id);
     const { id, ...dataToUpdate } = transaction;
-    await updateDoc(transactionRef, {
-      ...dataToUpdate,
-      date: Timestamp.fromDate(new Date(dataToUpdate.date)),
+    const data = {
+        ...dataToUpdate,
+        date: Timestamp.fromDate(new Date(dataToUpdate.date)),
+    };
+    updateDoc(transactionRef, data).catch(serverError => {
+      const permissionError = new FirestorePermissionError({
+        path: transactionRef.path,
+        operation: 'update',
+        requestResourceData: data,
+      });
+      errorEmitter.emit('permission-error', permissionError);
     });
   },
-  deleteTransaction: async (db: Firestore, userId: string, transactionId: string) => {
+  deleteTransaction: (db: Firestore, userId: string, transactionId: string) => {
     const transactionRef = doc(db, 'users', userId, 'transactions', transactionId);
-    await deleteDoc(transactionRef);
+    deleteDoc(transactionRef).catch(serverError => {
+      const permissionError = new FirestorePermissionError({
+        path: transactionRef.path,
+        operation: 'delete',
+      });
+      errorEmitter.emit('permission-error', permissionError);
+    });
   },
 }));
