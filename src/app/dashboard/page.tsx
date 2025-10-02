@@ -183,14 +183,20 @@ export default function DashboardPage() {
       </Dialog>
       
       {isChatOpen && (
-        <div className="fixed bottom-4 right-4 w-full max-w-md">
-          <FinancialAdvisor onClose={() => setIsChatOpen(false)} />
-        </div>
+        <>
+          <div 
+            className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm"
+            onClick={() => setIsChatOpen(false)} 
+          />
+          <div className="fixed bottom-4 right-4 z-50 w-full max-w-md">
+            <FinancialAdvisor onClose={() => setIsChatOpen(false)} />
+          </div>
+        </>
       )}
 
       <Button
         onClick={() => setIsChatOpen(!isChatOpen)}
-        className="fixed bottom-4 right-4 h-16 w-16 rounded-full shadow-lg"
+        className="fixed bottom-4 right-4 z-50 h-16 w-16 rounded-full shadow-lg"
         size="icon"
       >
         {isChatOpen ? <X /> : <MessageSquare />}
