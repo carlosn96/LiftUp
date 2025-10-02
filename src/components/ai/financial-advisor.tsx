@@ -77,7 +77,7 @@ export function FinancialAdvisor({ onClose }: FinancialAdvisorProps) {
                       : 'bg-muted'
                   }`}
                 >
-                  <p className="break-word">{message.content[0].text}</p>
+                  <p className="whitespace-pre-wrap break-words">{message.content[0].text}</p>
                 </div>
               </div>
             ))}
