@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MessageSquare, MoreHorizontal, PlusCircle, X } from 'lucide-react';
+import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -38,7 +38,6 @@ export default function DashboardPage() {
   const router = useRouter();
 
   const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   useEffect(() => {
@@ -182,26 +181,9 @@ export default function DashboardPage() {
         </DialogContent>
       </Dialog>
       
-      {isChatOpen && (
-        <>
-          <div 
-            className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm"
-            onClick={() => setIsChatOpen(false)} 
-          />
-          <div className="fixed bottom-4 right-4 z-50 w-full max-w-md">
-            <FinancialAdvisor onClose={() => setIsChatOpen(false)} />
-          </div>
-        </>
-      )}
-
-      <Button
-        onClick={() => setIsChatOpen(!isChatOpen)}
-        className="fixed bottom-4 right-4 z-50 h-16 w-16 rounded-full shadow-lg"
-        size="icon"
-      >
-        {isChatOpen ? <X /> : <MessageSquare />}
-        <span className="sr-only">Abrir Asesor Financiero</span>
-      </Button>
+      <div className="fixed bottom-4 right-4 z-50">
+        <FinancialAdvisor />
+      </div>
     </div>
   );
 }
