@@ -2,24 +2,20 @@
 
 import {
   createUserWithEmailAndPassword,
-  getAuth,
   signInWithEmailAndPassword,
 } from 'firebase/auth';
 import { useToast } from './use-toast';
-import { initializeFirebase } from '@/firebase';
+import { useAuth } from '@/firebase';
 
 export function useAuthForm() {
   const { toast } = useToast();
-  const { auth } = initializeFirebase();
+  const auth = useAuth();
 
   const handleLogin = async (email: string, password: string) => {
+    if (!auth) return;
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      toast({
-        title: 'Inicio de sesión exitoso',
-        description: 'Bienvenido de nuevo.',
-      });
-      // La redirección se manejará en un componente superior
+      // Redirection is handled by AuthListener
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -33,13 +29,10 @@ export function useAuthForm() {
   };
 
   const handleRegister = async (email: string, password: string) => {
+    if (!auth) return;
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      toast({
-        title: 'Registro exitoso',
-        description: 'Tu cuenta ha sido creada.',
-      });
-      // La redirección se manejará en un componente superior
+       // Redirection is handled by AuthListener
     } catch (error: any) {
       toast({
         variant: 'destructive',
