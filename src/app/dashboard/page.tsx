@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useAuth, useFirestore } from '@/firebase';
 import { useEffect, useMemo, useState } from 'react';
-import { Bell, TrendingUp, Plus } from 'lucide-react';
+import { Bell, TrendingUp, Plus, GraduationCap } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -36,6 +36,7 @@ import { es } from 'date-fns/locale';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { TransactionForm } from '@/components/transactions/transaction-form';
 import { FinancialAdvisor } from '@/components/ai/financial-advisor';
+import Link from 'next/link';
 
 export default function DashboardPage() {
   const { user, transactions, subscribeToTransactions } = useStore();
@@ -142,10 +143,18 @@ export default function DashboardPage() {
          <h1 className="text-xl sm:text-2xl font-bold font-headline text-foreground">
           LiftUp
         </h1>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Bell className="h-4 w-4" />
-            <span className="sr-only">Toggle notifications</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Link href="/education" passHref>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <GraduationCap className="h-4 w-4" />
+              <span className="sr-only">Aprende</span>
+            </Button>
+          </Link>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Bell className="h-4 w-4" />
+              <span className="sr-only">Toggle notifications</span>
+          </Button>
+        </div>
       </header>
 
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
