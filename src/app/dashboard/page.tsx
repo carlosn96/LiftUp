@@ -10,7 +10,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -135,7 +134,7 @@ export default function DashboardPage() {
   return (
     <div className="flex min-h-screen flex-col bg-muted/40">
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 py-2">
-         <h1 className="text-2xl font-bold font-headline text-foreground">
+         <h1 className="text-xl sm:text-2xl font-bold font-headline text-foreground">
           LiftUp
         </h1>
         <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -144,26 +143,26 @@ export default function DashboardPage() {
         </Button>
       </header>
 
-      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-         <h2 className="text-3xl font-bold text-foreground tracking-tight">Finanzas</h2>
+      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
+         <h2 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Finanzas</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Ventas</CardDescription>
-              <CardTitle className="text-4xl">${totalIncome.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</CardTitle>
+              <CardTitle className="text-3xl md:text-4xl">${totalIncome.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</CardTitle>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Egresos</CardDescription>
-              <CardTitle className="text-4xl">${totalExpense.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</CardTitle>
+              <CardTitle className="text-3xl md:text-4xl">${totalExpense.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</CardTitle>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Utilidad</CardDescription>
                 <div className="flex items-center gap-2">
-                    <CardTitle className="text-4xl">${netProfit.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</CardTitle>
+                    <CardTitle className="text-3xl md:text-4xl">${netProfit.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</CardTitle>
                     <TrendingUp className={`h-6 w-6 ${netProfit >= 0 ? 'text-green-500' : 'text-red-500'}`}/>
                 </div>
             </CardHeader>
