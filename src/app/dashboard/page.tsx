@@ -4,8 +4,8 @@ import { useStore } from '@/store/use-store';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useAuth, useFirestore } from '@/firebase';
-import { useEffect, useMemo } from 'react';
-import { Bell, TrendingUp } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Bell, TrendingUp, Plus } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -33,12 +33,17 @@ import {
 } from 'recharts';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { TransactionForm } from '@/components/transactions/transaction-form';
+import { FinancialAdvisor } from '@/components/ai/financial-advisor';
 
 export default function DashboardPage() {
   const { user, transactions, subscribeToTransactions } = useStore();
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
 
   useEffect(() => {
     if (user && firestore) {
@@ -61,7 +66,7 @@ export default function DashboardPage() {
     transactions
       .filter((t) => t.type === 'income')
       .forEach((t) => {
-        const month = format(new Date(t.date), 'MMM', { locale: es });
+        const month = format(new Date(t.date as any), 'MMM', { locale: es });
         sales[month] = (sales[month] || 0) + t.amount;
       });
 
@@ -115,7 +120,7 @@ export default function DashboardPage() {
   const chartConfigSales = {
     total: {
       label: 'Ventas',
-      color: 'hsl(var(--chart-2))',
+      color: 'hsl(var(--primary))',
     },
   };
 
@@ -127,7 +132,7 @@ export default function DashboardPage() {
   };
   
   const chartConfigBreakEven = {
-    ingresos: { label: 'Ingresos', color: 'hsl(var(--chart-2))' },
+    ingresos: { label: 'Ingresos', color: 'hsl(var(--primary))' },
     costos: { label: 'Costos', color: 'hsl(var(--chart-1))' },
   };
 
@@ -223,6 +228,27 @@ export default function DashboardPage() {
             </div>
         </div>
       </main>
+
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Añadir Transacción</SheetTitle>
+          </SheetHeader>
+          <div className="py-4">
+            <TransactionForm onSuccess={() => setIsSheetOpen(false)} />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Button
+        onClick={() => setIsSheetOpen(true)}
+        className="fixed bottom-4 right-4 h-14 w-14 rounded-full shadow-lg"
+      >
+        <Plus className="h-6 w-6" />
+        <span className="sr-only">Añadir Transacción</span>
+      </Button>
+
+      <FinancialAdvisor />
     </div>
   );
 }
