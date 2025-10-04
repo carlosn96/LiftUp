@@ -4,41 +4,42 @@ import { useStore } from '@/store/use-store';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useAuth, useFirestore } from '@/firebase';
-import { useEffect, useState } from 'react';
-import type { Transaction } from '@/store/use-store';
-import { TransactionForm } from '@/components/transactions/transaction-form';
+import { useEffect, useMemo } from 'react';
+import { Bell, TrendingUp } from 'lucide-react';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from '@/components/ui/chart';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { FinancialAdvisor } from '@/components/ai/financial-advisor';
-import Link from 'next/link';
+  Bar,
+  BarChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Pie,
+  PieChart,
+  Line,
+  LineChart,
+} from 'recharts';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 export default function DashboardPage() {
-  const { user, logout, transactions, subscribeToTransactions, deleteTransaction } = useStore();
+  const { user, transactions, subscribeToTransactions } = useStore();
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
-
-  const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   useEffect(() => {
     if (user && firestore) {
@@ -47,143 +48,182 @@ export default function DashboardPage() {
     }
   }, [user, firestore, subscribeToTransactions]);
 
-  const handleLogout = async () => {
-    if (!auth) return;
-    await logout(auth);
-    router.push('/');
-  };
 
-  const handleAddNew = () => {
-    setSelectedTransaction(null);
-    setIsTransactionDialogOpen(true);
-  };
-
-  const handleEdit = (transaction: Transaction) => {
-    setSelectedTransaction(transaction);
-    setIsTransactionDialogOpen(true);
-  };
-  
-  const handleDelete = async (transactionId: string) => {
-    if (!firestore || !user) return;
-    await deleteTransaction(firestore, user.uid, transactionId);
-  };
-
-  const totalIncome = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-  const totalExpense = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+  const totalIncome = transactions
+    .filter((t) => t.type === 'income')
+    .reduce((acc, t) => acc + t.amount, 0);
+  const totalExpense = transactions
+    .filter((t) => t.type === 'expense')
+    .reduce((acc, t) => acc + t.amount, 0);
   const netProfit = totalIncome - totalExpense;
 
+  const monthlySales = useMemo(() => {
+    const sales: { [key: string]: number } = {};
+    transactions
+      .filter((t) => t.type === 'income')
+      .forEach((t) => {
+        const month = format(new Date(t.date), 'MMM', { locale: es });
+        sales[month] = (sales[month] || 0) + t.amount;
+      });
+
+    const monthOrder = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    
+    return monthOrder.map(month => ({
+        month,
+        total: sales[month] || 0,
+    })).filter(d => d.total > 0);
+  }, [transactions]);
+  
+  const expenseBreakdown = useMemo(() => {
+    const categories: { [key: string]: number } = {
+        'Costos Fijos': 0,
+        'Costos Variables': 0,
+        'Marketing': 0,
+        'Otros': 0,
+    };
+    // This is placeholder logic. In a real app, transactions would have categories.
+    transactions.filter(t => t.type === 'expense').forEach((t, i) => {
+        const categoryKeys = Object.keys(categories);
+        const category = categoryKeys[i % categoryKeys.length];
+        categories[category] += t.amount;
+    });
+
+    return Object.keys(categories).map(name => ({
+        name,
+        value: categories[name],
+        fill: `var(--color-${name.toLowerCase().replace(' ', '')})`,
+    })).filter(item => item.value > 0);
+  }, [transactions]);
+
+  const breakEvenData = useMemo(() => {
+    const data = [];
+    const maxUnits = 100;
+    const pricePerUnit = totalIncome / (transactions.filter(t => t.type === 'income').length || 1);
+    const fixedCosts = totalExpense * 0.6; // 60% assumed fixed
+    const variableCostPerUnit = (totalExpense * 0.4) / (transactions.filter(t => t.type === 'income').length || 1) ;
+
+    for (let units = 0; units <= maxUnits; units += 10) {
+        data.push({
+            units,
+            ingresos: units * pricePerUnit,
+            costos: fixedCosts + (units * variableCostPerUnit),
+        });
+    }
+    return data;
+  }, [totalIncome, totalExpense, transactions]);
+
+
+  const chartConfigSales = {
+    total: {
+      label: 'Ventas',
+      color: 'hsl(var(--chart-2))',
+    },
+  };
+
+  const chartConfigExpenses = {
+    costosfijos: { label: 'Costos Fijos', color: 'hsl(var(--chart-1))' },
+    costosvariables: { label: 'Costos Variables', color: 'hsl(var(--chart-2))' },
+    marketing: { label: 'Marketing', color: 'hsl(var(--chart-3))' },
+    otros: { label: 'Otros', color: 'hsl(var(--chart-4))' },
+  };
+  
+  const chartConfigBreakEven = {
+    ingresos: { label: 'Ingresos', color: 'hsl(var(--chart-2))' },
+    costos: { label: 'Costos', color: 'hsl(var(--chart-1))' },
+  };
+
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background px-4 md:px-6">
-        <h1 className="text-xl font-bold font-headline text-foreground">
+    <div className="flex min-h-screen flex-col bg-muted/40">
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 py-2">
+         <h1 className="text-2xl font-bold font-headline text-foreground">
           LiftUp
         </h1>
-        <div className='flex items-center gap-4'>
-            <Link href="/education" passHref>
-              <Button variant="link" className="hidden sm:block">Aprende</Button>
-            </Link>
-            <p className="text-sm text-muted-foreground hidden sm:block">
-              {user?.email}
-            </p>
-            <Button onClick={handleLogout} variant="outline" size="sm">Cerrar Sesión</Button>
-        </div>
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Bell className="h-4 w-4" />
+            <span className="sr-only">Toggle notifications</span>
+        </Button>
       </header>
 
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
-            <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
-                <h3 className="text-sm font-medium text-muted-foreground">Ingresos Totales</h3>
-                <p className="text-2xl font-bold">${totalIncome.toFixed(2)}</p>
-            </div>
-            <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
-                <h3 className="text-sm font-medium text-muted-foreground">Egresos Totales</h3>
-                <p className="text-2xl font-bold">${totalExpense.toFixed(2)}</p>
-            </div>
-            <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
-                <h3 className="text-sm font-medium text-muted-foreground">Beneficio Neto</h3>
-                <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>${netProfit.toFixed(2)}</p>
-            </div>
+         <h2 className="text-3xl font-bold text-foreground tracking-tight">Finanzas</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Ventas</CardDescription>
+              <CardTitle className="text-4xl">${totalIncome.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Egresos</CardDescription>
+              <CardTitle className="text-4xl">${totalExpense.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Utilidad</CardDescription>
+                <div className="flex items-center gap-2">
+                    <CardTitle className="text-4xl">${netProfit.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</CardTitle>
+                    <TrendingUp className={`h-6 w-6 ${netProfit >= 0 ? 'text-green-500' : 'text-red-500'}`}/>
+                </div>
+            </CardHeader>
+          </Card>
         </div>
-        
-        <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
-          <div className="flex items-center justify-between p-6">
-            <h2 className="text-lg font-semibold">Transacciones Recientes</h2>
-            <Button onClick={handleAddNew} size="sm">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Agregar
-            </Button>
-          </div>
-          <div className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Descripción</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead className="text-right">Monto</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {transactions.length > 0 ? (
-                  transactions.map((transaction) => (
-                    <TableRow key={transaction.id}>
-                      <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
-                      <TableCell>{transaction.description}</TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs ${transaction.type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                          {transaction.type === 'income' ? 'Ingreso' : 'Egreso'}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">${transaction.amount.toFixed(2)}</TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Abrir menú</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEdit(transaction)}>
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDelete(transaction.id)}>
-                              Eliminar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center h-24">
-                      No hay transacciones registradas.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+            <Card className="col-span-full lg:col-span-4">
+                <CardHeader>
+                    <CardTitle>Ventas</CardTitle>
+                </CardHeader>
+                <CardContent className="pl-2">
+                    <ChartContainer config={chartConfigSales} className="h-[250px] w-full">
+                        <BarChart accessibilityLayer data={monthlySales}>
+                            <CartesianGrid vertical={false} />
+                            <XAxis dataKey="month" tickLine={false} tickMargin={10} axisLine={false} />
+                            <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`} />
+                            <ChartTooltip content={<ChartTooltipContent />} />
+                            <Bar dataKey="total" fill="var(--color-total)" radius={4} />
+                        </BarChart>
+                    </ChartContainer>
+                </CardContent>
+            </Card>
+
+            <div className="col-span-full lg:col-span-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Gastos</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex justify-center items-center h-[200px]">
+                        <ChartContainer config={chartConfigExpenses} className="mx-auto aspect-square h-full">
+                            <PieChart>
+                                <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
+                                <Pie data={expenseBreakdown} dataKey="value" nameKey="name" innerRadius={30} strokeWidth={5} />
+                                <ChartLegend content={<ChartLegendContent nameKey="name" />} />
+                            </PieChart>
+                        </ChartContainer>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Punto de equilibrio</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ChartContainer config={chartConfigBreakEven} className="h-[200px] w-full">
+                            <LineChart accessibilityLayer data={breakEvenData} margin={{ left: 12, right: 12 }}>
+                                <CartesianGrid vertical={false} />
+                                <XAxis dataKey="units" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => `${value}`} />
+                                <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => `$${value/1000}k`} />
+                                <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                                <Line dataKey="costos" type="monotone" stroke="var(--color-costos)" strokeWidth={2} dot={false} />
+                                <Line dataKey="ingresos" type="monotone" stroke="var(--color-ingresos)" strokeWidth={2} dot={false} />
+                                <ChartLegend content={<ChartLegendContent />} />
+                            </LineChart>
+                        </ChartContainer>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
       </main>
-
-      <Dialog open={isTransactionDialogOpen} onOpenChange={setIsTransactionDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{selectedTransaction ? 'Editar' : 'Agregar'} Transacción</DialogTitle>
-          </DialogHeader>
-          <TransactionForm 
-            transaction={selectedTransaction} 
-            onSuccess={() => setIsTransactionDialogOpen(false)} 
-          />
-        </DialogContent>
-      </Dialog>
-      
-      <div className="fixed bottom-4 right-4 z-50">
-        <FinancialAdvisor />
-      </div>
     </div>
   );
 }
