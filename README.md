@@ -45,8 +45,9 @@ Para ejecutar este proyecto en tu entorno de desarrollo local, sigue estos pasos
     NEXT_PUBLIC_FIREBASE_API_KEY=AIza...
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
     NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
-    NEXT_PUBLIC_FIREBASE_APP_ID=1:..
+    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
     NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
+    NEXT_PUBLIC_FIREBASE_APP_ID=1:...
     ```
 
 4.  **Ejecutar el servidor de desarrollo:**
@@ -54,4 +55,11 @@ Para ejecutar este proyecto en tu entorno de desarrollo local, sigue estos pasos
     npm run dev
     ```
 
-¡Abre [http://localhost:9002](http://localhost:9002) en tu navegador para ver la aplicación en acción!
+¡Abre [http://localhost:3000](http://localhost:3000) en tu navegador para ver la aplicación en acción!
+
+## 🧪 Credenciales de Prueba
+
+Para facilitar el acceso durante el desarrollo, puedes usar las siguientes credenciales:
+
+-   **Usuario:** `test@liftup.com`
+-   **Contraseña:** `password`
