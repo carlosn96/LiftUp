@@ -38,8 +38,8 @@ export default function AuthPage() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      email: 'test@liftup.com',
+      password: 'password',
     },
   });
 
