@@ -170,7 +170,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="col-span-full lg:col-span-4">
+            <Card className="col-span-full lg:col-span-4 min-w-0">
                 <CardHeader>
                     <CardTitle>Ventas</CardTitle>
                 </CardHeader>
@@ -187,8 +187,8 @@ export default function DashboardPage() {
                 </CardContent>
             </Card>
 
-            <div className="col-span-full lg:col-span-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1">
-                <Card>
+            <div className="col-span-full lg:col-span-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1 min-w-0">
+                <Card className='min-w-0'>
                     <CardHeader>
                         <CardTitle>Gastos</CardTitle>
                     </CardHeader>
@@ -202,7 +202,7 @@ export default function DashboardPage() {
                         </ChartContainer>
                     </CardContent>
                 </Card>
-                 <Card>
+                 <Card className='min-w-0'>
                     <CardHeader>
                         <CardTitle>Punto de equilibrio</CardTitle>
                     </CardHeader>
